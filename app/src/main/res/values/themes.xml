@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Home screen: transparent window that shows the system wallpaper -->
+    <style name="Theme.Home" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:enforceNavigationBarContrast" tools:targetApi="q">false</item>
+        <item name="android:enforceStatusBarContrast" tools:targetApi="q">false</item>
+        <item name="android:colorAccent">@color/accent</item>
+        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="p">shortEdges</item>
+    </style>
+
+    <!-- Settings screens, One UI-ish: flat background, rounded cards drawn in code -->
+    <style name="Theme.Settings" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/settings_bg</item>
+        <item name="android:statusBarColor">@color/settings_bg</item>
+        <item name="android:navigationBarColor">@color/settings_bg</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+        <item name="android:colorAccent">@color/accent</item>
+        <item name="android:colorPrimary">@color/accent</item>
+        <item name="android:colorControlActivated">@color/accent</item>
+    </style>
+
+    <!-- Headless helper activity (contact picker trampoline) -->
+    <style name="Theme.Invisible" parent="android:Theme.Translucent.NoTitleBar">
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+</resources>
