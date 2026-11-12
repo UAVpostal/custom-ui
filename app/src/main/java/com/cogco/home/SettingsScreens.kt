@@ -202,6 +202,14 @@ class EdgeSettingsActivity : SettingsBase() {
         content.addView(card.view, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
         content.addView(note("Tap a panel to edit what's on it, change its colours or move it. Swipe left and right inside the open panel to switch between them."))
 
+        section("Layout") {
+            choice(
+                "Panel items",
+                listOf("bottom" to "At the bottom (easier to reach)", "top" to "At the top"),
+                if (prefs.edgeItemsBottom) "bottom" else "top"
+            ) { prefs.edgeItemsBottom = it == "bottom" }
+        }
+
         section("Colours and style") {
             action("Default panel theme", Schemes.get(this@EdgeSettingsActivity, prefs, prefs.defaultScheme).name, true, Glyph.PALETTE) {
                 openGallery("default")

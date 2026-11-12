@@ -248,6 +248,7 @@ class Prefs(context: Context) {
     var edgeBlur by BoolPref("edge_blur", false)
     var edgeDim by IntPref("edge_dim", 30)
     var panelSize by StrPref("edge_panel_size", "normal")
+    var edgeItemsBottom by BoolPref("edge_items_bottom", true)
     var defaultScheme by StrPref("edge_scheme_default", "oneui_light")
     var tally by IntPref("edge_tally", 0)
     var customSchemesJson by StrPref("edge_custom_schemes", "[]")

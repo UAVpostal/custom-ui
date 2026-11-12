@@ -27,6 +27,7 @@ Kotlin, no third-party libraries (just the Android framework), minSdk 26 (Androi
   - **People**: favourite contacts with Call and Message buttons
   - **Tools**: flashlight, compass, tally counter, calculator, camera, alarms, Wi-Fi, volume, Bluetooth, settings (you choose which)
   - **Quick notes**: jot something down; tap a note to copy it
+- Panel items sit at the **bottom** of each panel by default, within thumb reach (Quick notes puts the writing box at the very bottom with the newest note just above it). Switch to the top under Edge panels ▸ Layout ▸ Panel items
 - Handle settings: colour, visibility, size, width, vertical position, vibrate on open
 - Panel size (compact / normal / wide), background dim, and blur behind the panel (Android 12+)
 

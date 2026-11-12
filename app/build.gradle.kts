@@ -11,8 +11,8 @@ android {
         applicationId = "com.cogco.home"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
     }
 
     // A fixed debug key kept in the repo, so every build (on any machine) is signed the same way

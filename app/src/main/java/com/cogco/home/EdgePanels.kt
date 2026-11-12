@@ -39,27 +39,58 @@ abstract class EdgePanel(val id: String, val title: String) {
     open fun onShow() {}
     open fun onHide() {}
 
-    /** Title on top, content below (scrollable). */
-    protected fun frame(ctx: Context, s: PanelScheme, body: View, scrollable: Boolean = true): View {
+    /** The panel's scroll area, so panels can jump to the end (e.g. the newest note). */
+    protected var scroller: ScrollView? = null
+
+    /** True when the user wants panel items at the bottom of the panel, within thumb reach. */
+    protected fun itemsAtBottom(ctx: Context): Boolean = ctx.app.prefs.edgeItemsBottom
+
+    protected fun scrollToEnd() {
+        val sv = scroller ?: return
+        sv.post { sv.scrollTo(0, sv.getChildAt(0)?.height ?: 0) }
+    }
+
+    /**
+     * Title + content (scrollable), plus an optional [footer] pinned under the content.
+     * Top layout: title at the top, items flow down from it.
+     * Bottom layout: title and items sit together at the bottom of the panel; if there are
+     * more items than fit, the list scrolls and the footer stays put at the very bottom.
+     */
+    protected fun frame(ctx: Context, s: PanelScheme, body: View, footer: View? = null): View {
+        val bottom = itemsAtBottom(ctx)
         val col = LinearLayout(ctx)
         col.orientation = LinearLayout.VERTICAL
-        col.setPadding(ctx.dp(8), ctx.dp(16), ctx.dp(8), ctx.dp(8))
-        col.addView(TextView(ctx).apply {
+        col.setPadding(ctx.dp(8), ctx.dp(if (bottom) 8 else 16), ctx.dp(8), ctx.dp(if (bottom) 14 else 8))
+        val titleView = TextView(ctx).apply {
             text = title
             setTextColor(ColorUtil.withAlpha(s.text, 0xD0))
             textSize = 13f
             typeface = Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER
             setPadding(0, 0, 0, ctx.dp(10))
-        })
-        if (scrollable) {
-            val sv = ScrollView(ctx)
-            sv.isVerticalScrollBarEnabled = false
-            sv.overScrollMode = View.OVER_SCROLL_NEVER
-            sv.addView(body, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-            col.addView(sv, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+        }
+        val sv = ScrollView(ctx)
+        sv.isVerticalScrollBarEnabled = false
+        sv.overScrollMode = View.OVER_SCROLL_NEVER
+        scroller = sv
+        if (bottom) {
+            // fillViewport stretches the wrapper to the panel height; gravity pushes everything down
+            sv.isFillViewport = true
+            val wrapper = LinearLayout(ctx)
+            wrapper.orientation = LinearLayout.VERTICAL
+            wrapper.gravity = Gravity.BOTTOM
+            wrapper.addView(titleView, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            wrapper.addView(body, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            sv.addView(wrapper, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
         } else {
-            col.addView(body, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+            col.addView(titleView)
+            sv.addView(body, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        }
+        col.addView(sv, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+        if (footer != null) {
+            col.addView(footer, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                topMargin = ctx.dp(8)
+            })
         }
         return col
     }
@@ -439,12 +470,12 @@ class NotesPanel : EdgePanel("notes", "Quick notes") {
     private lateinit var scheme: PanelScheme
     private lateinit var list: LinearLayout
     private lateinit var input: EditText
+    private var bottom = false
 
     override fun createView(ctx: Context, s: PanelScheme, host: PanelHost, widthPx: Int): View {
         this.ctx = ctx
         scheme = s
-        val body = LinearLayout(ctx)
-        body.orientation = LinearLayout.VERTICAL
+        bottom = itemsAtBottom(ctx)
 
         val row = LinearLayout(ctx)
         row.orientation = LinearLayout.HORIZONTAL
@@ -470,13 +501,21 @@ class NotesPanel : EdgePanel("notes", "Quick notes") {
         val add = circleButton(ctx, Glyph.PLUS, s.accent, ColorUtil.onColor(s.accent), 34) { addNote() }
         (add.layoutParams as LinearLayout.LayoutParams).marginStart = ctx.dp(6)
         row.addView(add)
-        body.addView(row)
 
         list = LinearLayout(ctx)
         list.orientation = LinearLayout.VERTICAL
-        list.setPadding(0, ctx.dp(10), 0, 0)
-        body.addView(list)
         render()
+        if (bottom) {
+            // chat-style: writing box pinned at the bottom, newest note right above it
+            val view = frame(ctx, s, list, footer = row)
+            scrollToEnd()
+            return view
+        }
+        list.setPadding(0, ctx.dp(10), 0, 0)
+        val body = LinearLayout(ctx)
+        body.orientation = LinearLayout.VERTICAL
+        body.addView(row)
+        body.addView(list)
         return frame(ctx, s, body)
     }
 
@@ -487,6 +526,7 @@ class NotesPanel : EdgePanel("notes", "Quick notes") {
         prefs.notes = listOf(t) + prefs.notes
         input.setText("")
         render()
+        if (bottom) scrollToEnd()
     }
 
     private fun render() {
@@ -502,7 +542,9 @@ class NotesPanel : EdgePanel("notes", "Quick notes") {
             })
             return
         }
-        notes.forEachIndexed { i, n -> list.addView(noteCard(i, n)) }
+        // notes are stored newest first; at the bottom, show newest last (closest to the thumb)
+        val order = if (bottom) notes.indices.reversed() else notes.indices
+        for (i in order) list.addView(noteCard(i, notes[i]))
     }
 
     private fun noteCard(index: Int, note: String): View {
